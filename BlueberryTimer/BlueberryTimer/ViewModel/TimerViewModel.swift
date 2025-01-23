@@ -71,12 +71,12 @@ class TimerViewModel: ObservableObject {
     }
 
     func stop() {
-        if isRunning = false
-            statusMessage = "Timer Stopped"
-            timer?.invalidate()
-            remainingTime = duration
-            currentRound = 1
-            elapsedTime = 0
+        isRunning = false
+        statusMessage = "Timer Stopped"
+        timer?.invalidate()
+        remainingTime = duration
+        currentRound = 1
+        elapsedTime = 0
     }
 
 
