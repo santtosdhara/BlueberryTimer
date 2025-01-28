@@ -29,8 +29,8 @@ enum TimerDetails {
 
 let amrapTimer = TimerModel(id: UUID(),
                             title: "AMRAP",
-                            duration: 120,
-                            detail: .amrap(rounds: 5))
+                            duration: 30,
+                            detail: .amrap(rounds: 2))
 
 let emomTimer = TimerModel(id: UUID(),
                            title: "EMOM",
