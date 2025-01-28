@@ -15,14 +15,14 @@ class TimerViewModel: ObservableObject {
     @Published var isRunning: Bool = false
     @Published var currentRound: Int = 1
     @Published var statusMessage: String = "Timer Ready"
-
+    @Published var timerType: TimerDetails
 
     // MARK: - Private properties
     private var timer: Timer?
     private var duration: Int
     private var interval: Int?
     private var rounds: Int?
-    private var timerType: TimerDetails
+
 
     private var elapsedTime: Int = 0
 
