@@ -11,8 +11,9 @@ import Combine
 // MARK: - Published Properties for UI Binding
 
 class TimerViewModel: ObservableObject {
-    @Published var remainingTime: Int = 0
+    @Published var remainingTime: Int
     @Published var isRunning: Bool = false
+    @Published var isPaused: Bool = false
     @Published var currentRound: Int = 1
     @Published var statusMessage: String = "Timer Ready"
     @Published var timerType: TimerDetails
@@ -49,15 +50,19 @@ class TimerViewModel: ObservableObject {
         statusMessage = "Timer Running"
 
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.updateTimer()
+            guard let self = self else { return }
+            if self.remainingTime > 0 {
+                self.remainingTime -= 1
+            } else {
+                self.stop()
+            }
         }
     }
 
     func pause() {
-        guard isRunning else { return }
+        timer?.invalidate()
         isRunning = false
         statusMessage = "Timer Paused"
-        timer?.invalidate()
     }
 
     func resume() {
@@ -71,12 +76,10 @@ class TimerViewModel: ObservableObject {
     }
 
     func stop() {
+        timer?.invalidate()
         isRunning = false
         statusMessage = "Timer Stopped"
-        timer?.invalidate()
-        remainingTime = duration
-        currentRound = 1
-        elapsedTime = 0
+        remainingTime = 0
     }
 
 
