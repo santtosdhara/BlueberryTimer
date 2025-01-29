@@ -8,47 +8,38 @@
 import SwiftUI
 
 struct BlueberryTimerTabView: View {
+    private let timers: [TimerModel] = [
+        amrapTimer,
+        emomTimer,
+        forTimeTimer
+    ]
+
+    @State private var selectedTab = 0
+
+    init() {
+        UITabBar.appearance().unselectedItemTintColor = UIColor(Color.mint)
+    }
+
     var body: some View {
-        TabView {
-
-            // AMRAP Timer Tab
-            TimerView(viewModel: TimerViewModel(timerModel: TimerModel(
-                id: UUID(),
-                title: "AMRAP Workout",
-                duration: 1200, // 20 minutes
-                detail: .amrap(rounds: 5)
-            )))
-            //TODO: Style the button to change the color when selected to green
-            .tabItem {
-                VStack {
-                    Image(systemName: "stopwatch")
-                        .foregroundColor(Color.buttonPlayInnerBg)
-                        Text("AMRAP")
-                        .foregroundStyle(.white)
-                }
+        TabView(selection: $selectedTab) {
+            ForEach(Array(timers.enumerated()), id: \.element.id) { index, timer in
+                TimerView(viewModel: TimerViewModel(timerModel: timer))
+                    .tabItem {
+                        Label(timer.title, systemImage: timerIcon(for: timer.detail))
+                    }
+                    .tag(index)
             }
+        }
+    }
 
-            // EMOM Timer Tab
-            TimerView(viewModel: TimerViewModel(timerModel: TimerModel(
-                id: UUID(),
-                title: "EMOM Workout",
-                duration: 600, // 10 minutes
-                detail: .emom(interval: 60)
-            )))
-            .tabItem {
-                Label("EMOM", systemImage: "timer")
-            }
-
-            // For Time Timer Tab
-            TimerView(viewModel: TimerViewModel(timerModel: TimerModel(
-                id: UUID(),
-                title: "For Time Workout",
-                duration: 900, // 15 minutes
-                detail: .forTime(targetTime: 900)
-            )))
-            .tabItem {
-                Label("For Time", systemImage: "hourglass")
-            }
+    private func timerIcon(for detail: TimerDetails) -> String {
+        switch detail {
+            case .amrap:
+                return "stopwatch"
+            case .emom:
+                return "timer"
+            case .forTime:
+                return "hourglass"
         }
     }
 }
