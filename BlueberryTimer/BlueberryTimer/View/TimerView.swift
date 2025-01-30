@@ -55,22 +55,19 @@ struct TimerView: View {
     @ViewBuilder
     private func timerSpecificDetails() -> some View {
         switch viewModel.timerType {
-            case .amrap(let rounds):
+            case .amrap(let duration):
                 VStack {
-                    Text("ROUNDS")
-                        .foregroundStyle(.white)
-                    Text("\(viewModel.currentRound) / \(rounds)")
-                        .font(.title)
-                        .fontWeight(.semibold)
+                    Text("Workout Time Cap \(duration)")
                         .foregroundStyle(.white)
                 }
-            case .emom(let interval):
-                Text("Interval: \(interval) seconds")
+            case .emom(let interval, let duration):
+                Text("Rounds: \(interval),interval \(duration)")
                     .font(.title)
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
-            case .forTime(let targetTime):
-                Text("Target Time: \(formatTime(targetTime))")
+                Text("\(viewModel.currentRound) / \(interval)")
+            case .forTime(let duration):
+                Text("Target Time: \(formatTime(duration))")
                     .font(.title)
                     .fontWeight(.semibold)
                     .foregroundStyle(.white)
@@ -106,6 +103,7 @@ struct StartButtonStyle: ButtonStyle {
     }
 }
 
+// TODO: Move the button components to another file
 struct PauseButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         ZStack {
