@@ -21,25 +21,25 @@ struct TimerModel: BaseTimer {
     let detail: TimerDetails
 }
 
-enum TimerDetails {
+enum TimerDetails: Hashable {
     case amrap(duration: Int)                        //AMRAP: Workout duration with the timer countdown
     case emom(rounds: Int, interval: Int)            //EMOM-specific: Interval timer with rounds in seconds
-    case forTime(duration: Int)                      //For time-specific: Target completion in seconds - Increase timer from 0
+    case forTime(cap: Int)                      //For time-specific: Target completion in seconds - Increase timer from 0
 }
 
 
 //TODO: Change the parameters to get the times from the user on the main view.
 let amrapTimer = TimerModel(id: UUID(),
                             title: "AMRAP",
-                            duration: 30,
-                            detail: .amrap(duration: 30))
+                            duration: 0,
+                            detail: .amrap(duration: 0))
 
 let emomTimer = TimerModel(id: UUID(),
                            title: "EMOM",
-                           duration: 30,
-                           detail: .emom(rounds: 2, interval: 30))
+                           duration: 0,
+                           detail: .emom(rounds: 0, interval: 0))
 
 let forTimeTimer = TimerModel(id: UUID(),
                               title: "For Time",
-                              duration: 30,
-                              detail: .forTime(duration: 30))
+                              duration: 0,
+                              detail: .forTime(cap: 0))
