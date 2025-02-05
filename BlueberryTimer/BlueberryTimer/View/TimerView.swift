@@ -8,72 +8,78 @@
 import SwiftUI
 
 struct TimerView: View {
-    @StateObject var viewModel: TimerViewModel // StateObject for observing changes
-    
+    @StateObject var viewModel: TimerViewModel
+    @State private var showingSheet = false
+    //    @State private var selectedTimerType: TimerDetails?
+
     var body: some View {
         NavigationView {
             ZStack {
                 Color.background.ignoresSafeArea(.all)
                 VStack(spacing: 10) {
                     timerSpecificDetails()
-                    //Change this statusMessage to the timer name
+
                     Spacer()
-                    
+
                     Text(viewModel.statusMessage)
                         .font(.title2)
                         .foregroundStyle(.white)
                         .fontWeight(.semibold)
                         .padding()
-                    
+
                     Text(formatTime(viewModel.remainingTime))
                         .font(.system(size: 66, weight: .semibold))
                         .foregroundStyle(.white)
-                    
-                    
-                    //Mudar essa lógica pra mudar os botões quando estiver pausado
+                        .onTapGesture {
+                            showingSheet = true
+                        }
+
+
+
                     HStack {
                         if viewModel.isRunning {
                             Button("Pause", action: viewModel.pause)
                                 .buttonStyle(PauseButtonStyle())
-                            
+
                             Button("Stop", action: viewModel.stop)
                                 .buttonStyle(StopButtonStyle())
                         } else {
                             Button(viewModel.remainingTime > 0 ? "Resume" : "Start", action: viewModel.start)
                                 .buttonStyle(StartButtonStyle())
                         }
-                        
+
                     }
                     Spacer()
                 }
             }
-            
-        }//end NavigationView
+        }.sheet(isPresented: $showingSheet) {
+            TimerSettingsSheet(viewModel: viewModel, showingSheet: $showingSheet)
+                .presentationDetents([.medium]) // 👈 Sets the sheet height to half the screen
+                .presentationDragIndicator(.visible) // 👈 Adds a drag indicator at the top
+                .foregroundStyle(Color.background)
+
+        }
     }
-    
+
     // Timer Specific Details Based on Timer Type
     @ViewBuilder
     private func timerSpecificDetails() -> some View {
         switch viewModel.timerType {
             case .amrap(let duration):
+                VStack { Text("Workout Time Cap \(formatTime(duration))").foregroundStyle(.white) }
+            case .emom(let rounds, let interval):
                 VStack {
-                    Text("Workout Time Cap \(duration)")
-                        .foregroundStyle(.white)
+                    Text("Rounds: \(rounds), Interval: \(interval)s")
+                        .font(.title).foregroundStyle(.white)
+                    Text("Current Round: \(viewModel.currentRound) / \(rounds)").foregroundStyle(.white)
                 }
-            case .emom(let interval, let duration):
-                Text("Rounds: \(interval),interval \(duration)")
-                    .font(.title)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-                Text("\(viewModel.currentRound) / \(interval)")
             case .forTime(let duration):
-                Text("Target Time: \(formatTime(duration))")
-                    .font(.title)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
+                Text("Time Cap: \(formatTime(duration))").font(.title).foregroundStyle(.white)
+            case .none:
+                Text("Select a Timer")
         }
     }
-    
+
     // Function to format the time
     private func formatTime(_ seconds: Int) -> String {
         let minutes = seconds / 60
@@ -89,16 +95,16 @@ struct StartButtonStyle: ButtonStyle {
                 .fill(Color.buttonBg)
                 .frame(width: 86, height: 86)
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 5, y: 5)
-            
+
             Circle()
                 .fill(Color.buttonPlayInnerBg)
                 .frame(width: 66, height: 66)
-            
-            
+
+
             Image(systemName: "play.fill")
                 .font(.title)
                 .foregroundStyle(.buttonBg)
-            
+
         }
     }
 }
@@ -111,11 +117,11 @@ struct PauseButtonStyle: ButtonStyle {
                 .fill(Color.buttonBg)
                 .frame(width: 86, height: 86)
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 5, y: 5)
-            
+
             Circle()
                 .fill(Color.buttonPlayInnerBg)
                 .frame(width: 66, height: 66)
-            
+
             Image(systemName: "pause.fill")
                 .font(.system(size: 36, weight: .semibold))
                 .foregroundStyle(.buttonBg)
@@ -130,11 +136,11 @@ struct StopButtonStyle: ButtonStyle {
                 .fill(Color.buttonBg)
                 .frame(width: 86, height: 86)
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 5, y: 5)
-            
+
             Circle()
                 .fill(Color.buttonPlayInnerBg)
                 .frame(width: 66, height: 66)
-            
+
             Image(systemName: "stop.fill")
                 .font(.system(size: 36, weight: .semibold))
                 .foregroundStyle(.buttonBg)
@@ -149,11 +155,11 @@ struct RestartButtonStyle: ButtonStyle {
                 .fill(Color.buttonBg)
                 .frame(width: 86, height: 86)
                 .shadow(color: .black.opacity(0.3), radius: 10, x: 5, y: 5)
-            
+
             Circle()
                 .fill(Color.buttonPlayInnerBg)
                 .frame(width: 66, height: 66)
-            
+
             Image(systemName: "arrow.clockwise")
                 .font(.system(size: 36, weight: .semibold))
                 .foregroundStyle(.buttonBg)
@@ -163,5 +169,5 @@ struct RestartButtonStyle: ButtonStyle {
 
 
 #Preview {
-    TimerView(viewModel: TimerViewModel(timerModel: amrapTimer))
+    TimerView(viewModel: TimerViewModel())
 }

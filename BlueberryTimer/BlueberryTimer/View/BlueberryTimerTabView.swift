@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct BlueberryTimerTabView: View {
+    @StateObject private var viewModel = TimerViewModel()
     private let timers: [TimerModel] = [
         amrapTimer,
         emomTimer,
@@ -17,13 +18,13 @@ struct BlueberryTimerTabView: View {
     @State private var selectedTab = 0
 
     init() {
-        UITabBar.appearance().unselectedItemTintColor = UIColor(Color.mint)
+        UITabBar.appearance().unselectedItemTintColor = UIColor(Color.buttonPlayInnerBg)
     }
 
     var body: some View {
         TabView(selection: $selectedTab) {
             ForEach(Array(timers.enumerated()), id: \.element.id) { index, timer in
-                TimerView(viewModel: TimerViewModel(timerModel: timer))
+                TimerView(viewModel: viewModel) // Use the same ViewModel
                     .tabItem {
                         Label(timer.title, systemImage: timerIcon(for: timer.detail))
                     }
