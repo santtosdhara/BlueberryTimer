@@ -11,13 +11,14 @@ class TimerViewModel: ObservableObject {
     @Published var statusMessage: String = "Set a Time"
     @Published var timerType: TimerDetails?
 
+
     // Enable Start button only when time is set for AMRAP & For Time
     var canStart: Bool {
         if let timerType = timerType {
             switch timerType {
-            case .amrap: return remainingTime > 0
-            case .forTime: return remainingTime > 0
-            case .emom: return true // EMOM only requires rounds & interval
+                case .amrap: return remainingTime > 0
+                case .forTime: return remainingTime > 0
+                case .emom: return true // EMOM only requires rounds & interval
             }
         }
         return false
@@ -35,22 +36,22 @@ class TimerViewModel: ObservableObject {
         self.timerType = type
 
         switch type {
-        case .amrap(let duration):
-            self.remainingTime = duration
-            self.totalTime = duration
-            self.statusMessage = "Ready for AMRAP"
+            case .amrap(let duration):
+                self.remainingTime = duration
+                self.totalTime = duration
+                self.statusMessage = "Ready for AMRAP"
 
             case .emom(let rounds, let interval):
-            self.totalRounds = rounds
-            self.interval = interval
-            self.remainingTime = interval // Start with one round interval
-            self.statusMessage = "Ready for EMOM"
+                self.totalRounds = rounds
+                self.interval = interval
+                self.remainingTime = interval // Start with one round interval
+                self.statusMessage = "Ready for EMOM"
 
-        case .forTime(let cap):
-            self.timeCap = cap
-            self.elapsedTime = 0
-            self.remainingTime = cap
-            self.statusMessage = "Ready for For Time"
+            case .forTime(let cap):
+                self.timeCap = cap
+                self.elapsedTime = 0
+                self.remainingTime = cap
+                self.statusMessage = "Ready for For Time"
         }
     }
 
@@ -101,12 +102,12 @@ class TimerViewModel: ObservableObject {
         guard let timerType = timerType else { return }
 
         switch timerType {
-        case .amrap:
-            handleAMRAPLogic()
-        case .emom:
-            handleEMOMLogic()
-        case .forTime:
-            handleForTimeLogic()
+            case .amrap:
+                handleAMRAPLogic()
+            case .emom:
+                handleEMOMLogic()
+            case .forTime:
+                handleForTimeLogic()
         }
     }
 

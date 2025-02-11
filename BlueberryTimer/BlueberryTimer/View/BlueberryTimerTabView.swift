@@ -1,38 +1,49 @@
-//
-//  AmrapView.swift
-//  BlueberryTimer
-//
-//  Created by Dhara Santos on 1/27/25.
-//
-
 import SwiftUI
 
 struct BlueberryTimerTabView: View {
     @StateObject private var viewModel = TimerViewModel()
+    @State private var selectedTabIndex = 0
+    @State private var isSettingUpTimer = true
+    @State private var timerDuration: Int = 0
+
     private let timers: [TimerModel] = [
         amrapTimer,
         emomTimer,
         forTimeTimer
     ]
 
-    @State private var selectedTab = 0
-
     init() {
         UITabBar.appearance().unselectedItemTintColor = UIColor(Color.buttonPlayInnerBg)
     }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            ForEach(Array(timers.enumerated()), id: \.element.id) { index, timer in
-                TimerView(viewModel: viewModel) // Use the same ViewModel
-                    .tabItem {
-                        Label(timer.title, systemImage: timerIcon(for: timer.detail))
+        TabView(selection: $selectedTabIndex) {
+            ForEach(timers.indices, id: \.self) { index in
+                let timer = timers[index]
+
+                Group {
+                    if isSettingUpTimer {
+                        TimerSetupView(selectedType: timer.detail) { selectedTimerType in
+                            viewModel.setTimer(type: selectedTimerType)
+                            isSettingUpTimer = false
+                        }
+                    } else {
+                        TimerView(viewModel: viewModel, isSettingUpTimer: $isSettingUpTimer)
                     }
-                    .tag(index)
+                }
+                .tabItem {
+                    Label(timer.title, systemImage: timerIcon(for: timer.detail))
+                }
+                .tag(index)
             }
+        }
+        .onChange(of: selectedTabIndex) { newTab in
+            let selectedTimerDetails = timers[newTab].detail // Break into sub-expression
+            viewModel.setTimer(type: selectedTimerDetails)
         }
     }
 
+        //
     private func timerIcon(for detail: TimerDetails) -> String {
         switch detail {
             case .amrap:
@@ -43,6 +54,7 @@ struct BlueberryTimerTabView: View {
                 return "hourglass"
         }
     }
+
 }
 
 #Preview {
