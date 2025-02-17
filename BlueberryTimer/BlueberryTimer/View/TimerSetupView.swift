@@ -9,7 +9,7 @@ struct TimerSetupView: SwiftUI.View {
     let roundRange = 1...20
     let minuteRange = Array(1...59)
     var onConfirm: (TimerDetails) -> Void
-    
+
     var body: some View {
         ZStack {
             Color.background.ignoresSafeArea(.all)
@@ -159,4 +159,9 @@ struct CustomTimerPickerView: UIViewRepresentable {
             parent.timeInterval = sender.countDownDuration
         }
     }
+}
+
+
+#Preview {
+    TimerSetupView(selectedType: .amrap(duration: 0), onConfirm: { _ in })
 }
