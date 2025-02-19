@@ -4,7 +4,7 @@ struct BlueberryTimerTabView: View {
     @StateObject private var viewModel = TimerViewModel()
     @State private var selectedTabIndex = 0
     @State private var isSettingUpTimer = true
-    @State private var timerDuration: Int = 0
+    @State private var selectedTimerTitle: String = "Blueberry Timer"
 
     private let timers: [TimerModel] = [
         amrapTimer,
@@ -17,33 +17,47 @@ struct BlueberryTimerTabView: View {
     }
 
     var body: some View {
-        TabView(selection: $selectedTabIndex) {
-            ForEach(timers.indices, id: \.self) { index in
-                let timer = timers[index]
+        NavigationStack { // ✅ Use NavigationStack instead of NavigationView
+            ZStack {
+                Color.background.ignoresSafeArea()
 
-                Group {
-                    if isSettingUpTimer {
-                        TimerSetupView(selectedType: timer.detail) { selectedTimerType in
-                            viewModel.setTimer(type: selectedTimerType)
-                            isSettingUpTimer = false
+                TabView(selection: $selectedTabIndex) {
+                    ForEach(timers.indices, id: \.self) { index in
+                        let timer = timers[index]
+
+                        Group {
+                            if isSettingUpTimer {
+                                TimerSetupView(selectedType: timer.detail) { selectedTimerType in
+                                    viewModel.setTimer(type: selectedTimerType)
+                                    isSettingUpTimer = false
+                                }
+                            } else {
+                                TimerView(viewModel: viewModel, isSettingUpTimer: $isSettingUpTimer)
+                            }
                         }
-                    } else {
-                        TimerView(viewModel: viewModel, isSettingUpTimer: $isSettingUpTimer)
+                        .tabItem {
+                            Label(timer.title, systemImage: timerIcon(for: timer.detail))
+                        }
+                        .tag(index)
                     }
                 }
-                .tabItem {
-                    Label(timer.title, systemImage: timerIcon(for: timer.detail))
+                .onChange(of: selectedTabIndex) { newTab in
+                    let selectedTimer = timers[newTab]
+                    selectedTimerTitle = selectedTimer.title
+                    viewModel.setTimer(type: selectedTimer.detail)
                 }
-                .tag(index)
             }
-        }
-        .onChange(of: selectedTabIndex) { newTab in
-            let selectedTimerDetails = timers[newTab].detail // Break into sub-expression
-            viewModel.setTimer(type: selectedTimerDetails)
+            .navigationTitle("") // Remove default title
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text(selectedTimerTitle) // ✅ Show dynamic timer name
+                        .font(.title)
+                        .foregroundColor(.white) // Change title color
+                }
+            }
         }
     }
 
-        //
     private func timerIcon(for detail: TimerDetails) -> String {
         switch detail {
             case .amrap:
@@ -54,7 +68,6 @@ struct BlueberryTimerTabView: View {
                 return "hourglass"
         }
     }
-
 }
 
 #Preview {
