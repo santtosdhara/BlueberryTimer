@@ -17,7 +17,7 @@ struct BlueberryTimerTabView: View {
     }
 
     var body: some View {
-        NavigationStack { // ✅ Use NavigationStack instead of NavigationView
+        NavigationStack {
             ZStack {
                 Color.background.ignoresSafeArea()
 
@@ -50,9 +50,9 @@ struct BlueberryTimerTabView: View {
             .navigationTitle("") // Remove default title
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text(selectedTimerTitle) // ✅ Show dynamic timer name
+                    Text(selectedTimerTitle)
                         .font(.title)
-                        .foregroundColor(.white) // Change title color
+                        .foregroundColor(.white)
                 }
             }
         }
