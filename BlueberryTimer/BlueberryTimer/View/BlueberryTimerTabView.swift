@@ -6,11 +6,19 @@ struct BlueberryTimerTabView: View {
     @State private var isSettingUpTimer = true
     @State private var selectedTimerTitle: String = "Blueberry Timer"
 
-    private let timers: [TimerModel] = [
-        amrapTimer,
-        emomTimer,
-        forTimeTimer
-    ]
+
+    @AppStorage("amrapDuration") private var amrapDuration: Int = 900
+    @AppStorage("emomRounds") private var emomRounds: Int = 10
+    @AppStorage("emomInterval") private var emomInterval: Int = 60
+    @AppStorage("forTimeCap") private var forTimeCap: Int = 300
+
+    private var timers: [TimerModel] {
+        return [
+            TimerModel(id: UUID(), title: "AMRAP", detail: .amrap(duration: amrapDuration)),
+            TimerModel(id: UUID(), title: "EMOM", detail: .emom(rounds: emomRounds, interval: emomInterval)),
+            TimerModel(id: UUID(), title: "For Time", detail: .forTime(cap: forTimeCap))
+        ]
+    }
 
     init() {
         UITabBar.appearance().unselectedItemTintColor = UIColor(Color.buttonPlayInnerBg)
