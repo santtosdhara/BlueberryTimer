@@ -54,8 +54,13 @@ struct TimerView: View {
                     Spacer()
                 }
             }
-            .navigationBarTitle("Timer", displayMode: .inline)
+            .navigationBarTitle("Blueberry Timer", displayMode: .inline)
             .navigationBarItems(leading: backButton)
+            .gesture(DragGesture().onEnded { gesture in
+                if gesture.translation.width > 100 { // ✅ Detect left-to-right swipe
+                    isSettingUpTimer = true
+                }
+            })
         }
     }
 

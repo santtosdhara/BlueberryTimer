@@ -4,7 +4,7 @@ struct BlueberryTimerTabView: View {
     @StateObject private var viewModel = TimerViewModel()
     @State private var selectedTabIndex = 0
     @State private var isSettingUpTimer = true
-    @State private var selectedTimerTitle: String = "Blueberry Timer"
+    @State private var selectedTimerTitle: String = ""
 
 
     @AppStorage("amrapDuration") private var amrapDuration: Int = 900
@@ -53,14 +53,6 @@ struct BlueberryTimerTabView: View {
                     let selectedTimer = timers[newTab]
                     selectedTimerTitle = selectedTimer.title
                     viewModel.setTimer(type: selectedTimer.detail)
-                }
-            }
-            .navigationTitle("") // Remove default title
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text(selectedTimerTitle)
-                        .font(.title)
-                        .foregroundColor(.white)
                 }
             }
         }
