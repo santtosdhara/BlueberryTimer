@@ -11,21 +11,20 @@ protocol BaseTimer {
     var id: UUID { get }
     var title: String { get }
 }
+enum TimerType: Hashable {
+    case amrap(duration: Int)
+    case forTime(duration: Int)
+    case emom(rounds: Int, interval: Int)
+}
 
 struct TimerModel: BaseTimer {
     let id: UUID
     let title: String
-    let detail: TimerDetails
+    let type: TimerType
 }
 
-enum TimerDetails: Hashable {
-    case amrap(duration: Int)
-    case emom(rounds: Int, interval: Int)
-    case forTime(cap: Int)
-}
-
-func createTimer(title: String, detail: TimerDetails) -> TimerModel {
-    return TimerModel(id: UUID(), title: title, detail: detail)
+func createTimer(title: String, type: TimerType) -> TimerModel {
+    return TimerModel(id: UUID(), title: title, type: type)
 }
 
 

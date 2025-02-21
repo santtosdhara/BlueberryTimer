@@ -7,9 +7,10 @@
 
 import SwiftUI
 
+
 struct TimerView: View {
-    @StateObject var viewModel: TimerViewModel
-    @Binding var isSettingUpTimer: Bool // Allows toggling back to setup
+    @ObservedObject var viewModel: TimerViewModel
+    @Binding var isSettingUpTimer: Bool
 
     var body: some View {
         NavigationView {
@@ -17,17 +18,19 @@ struct TimerView: View {
                 Color.background.ignoresSafeArea(.all)
 
                 VStack(spacing: 10) {
-                    timerSpecificDetails()
-                        .padding(20)
+                 //   timerSpecificDetails()
+                     //   .padding(20)
 
                     Spacer()
                         .frame(height: 146)
 
-                    Text(viewModel.statusMessage)
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                        .fontWeight(.semibold)
-                        .padding()
+                    if let activeTimer = viewModel.activeTimer {
+                        Text(activeTimer.title)
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                            .fontWeight(.semibold)
+                            .padding()
+                    }
 
                     Text(formatTime(viewModel.remainingTime))
                         .font(.system(size: 66, weight: .semibold))
@@ -35,19 +38,19 @@ struct TimerView: View {
 
                     HStack {
                         if viewModel.isRunning {
-                            Button("Pause", action: viewModel.pause)
+                            Button("Pause", action: viewModel.pauseTimer)
                                 .buttonStyle(PauseButtonStyle())
 
                             Button("Stop") {
-                                viewModel.stop()
+                                viewModel.stopTimer()
                                 isSettingUpTimer = true
                             }
                             .buttonStyle(StopButtonStyle())
 
-                            Button("Reset", action: viewModel.restart)
+                            Button("Reset", action: viewModel.resetTimer)
                                 .buttonStyle(RestartButtonStyle())
                         } else {
-                            Button(viewModel.remainingTime > 0 ? "Resume" : "Start", action: viewModel.start)
+                            Button(viewModel.remainingTime > 0 ? "Resume" : "Start", action: viewModel.startTimer)
                                 .buttonStyle(StartButtonStyle())
                         }
                     }
@@ -61,37 +64,54 @@ struct TimerView: View {
                     isSettingUpTimer = true
                 }
             })
+            .onAppear {
+                if let activeTimer = viewModel.activeTimer, activeTimer.type != .amrap(duration: 0) {
+                    print("✅ TimerView Appeared - Using Existing Timer: \(activeTimer.type) with \(viewModel.remainingTime) seconds")
+                } else {
+                    print("🚫 No active timer or invalid timer detected, please configure one first")
+                }
+            }
         }
     }
 
     private var backButton: some View {
-            Button(action: {
-                isSettingUpTimer = true // ✅ Go back to setup
-            }) {
-                HStack {
-                    Image(systemName: "chevron.left")
-                        .bold()
-                }
-                .foregroundColor(.buttonPlayInnerBg) // ✅ Match app theme
+        Button(action: {
+            isSettingUpTimer = true // ✅ Go back to setup
+        }) {
+            HStack {
+                Image(systemName: "chevron.left")
+                    .bold()
             }
+            .foregroundColor(.buttonPlayInnerBg) // ✅ Match app theme
         }
+    }
 
     // Timer Specific Details Based on Timer Type
     @ViewBuilder
     private func timerSpecificDetails() -> some View {
-        switch viewModel.timerType {
-            case .amrap(let duration):
-                VStack { Text("Workout Time Cap \(formatTime(duration))").foregroundStyle(.white) }
-            case .emom(let rounds, let interval):
-                VStack {
-                    Text("Rounds: \(rounds), Interval: \(interval)s")
-                        .font(.title).foregroundStyle(.white)
-                    Text("Current Round: \(viewModel.currentRound) / \(rounds)").foregroundStyle(.white)
-                }
-            case .forTime(let duration):
-                Text("Time Cap: \(formatTime(duration))").font(.title).foregroundStyle(.white)
-            case .none:
-                Text("")
+        if let activeTimer = viewModel.activeTimer {
+            switch activeTimer.type {
+                case .amrap(let duration):
+                    VStack {
+                        Text("Workout Time Cap: \(formatTime(duration))")
+                            .foregroundStyle(.white)
+                    }
+                case .emom(let rounds, let interval):
+                    VStack {
+                        Text("Rounds: \(rounds), Interval: \(interval)s")
+                            .font(.title).foregroundStyle(.white)
+                        Text("Current Round: \(viewModel.currentRound) / \(rounds)")
+                            .foregroundStyle(.white)
+                    }
+                case .forTime(let duration):
+                    Text("Time Cap: \(formatTime(duration))")
+                        .font(.title)
+                        .foregroundStyle(.white)
+            }
+        } else {
+            Text("No Timer Selected")
+                .foregroundStyle(.white)
+                .font(.title3)
         }
     }
 
@@ -115,11 +135,9 @@ struct StartButtonStyle: ButtonStyle {
                 .fill(Color.buttonPlayInnerBg)
                 .frame(width: 66, height: 66)
 
-
             Image(systemName: "play.fill")
                 .font(.title)
                 .foregroundStyle(.buttonBg)
-
         }
     }
 }

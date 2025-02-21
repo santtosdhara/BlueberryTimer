@@ -1,153 +1,132 @@
 import Foundation
 import Combine
 
+
 // MARK: - TimerViewModel
+
 class TimerViewModel: ObservableObject {
-    @Published var remainingTime: Int = 0 // Used for AMRAP & EMOM
-    @Published var elapsedTime: Int = 0 // Used for For Time
+    @Published var activeTimer: TimerModel?
+    @Published var remainingTime: Int = 0
     @Published var isRunning: Bool = false
     @Published var isPaused: Bool = false
     @Published var currentRound: Int = 1
-    @Published var statusMessage: String = "Set a Time"
-    @Published var timerType: TimerDetails?
 
-
-    // Enable Start button only when time is set for AMRAP & For Time
-    var canStart: Bool {
-        if let timerType = timerType {
-            switch timerType {
-                case .amrap: return remainingTime > 0
-                case .forTime: return remainingTime > 0
-                case .emom: return true // EMOM only requires rounds & interval
-            }
-        }
-        return false
-    }
-
-    // MARK: - Private Properties
     private var timer: Timer?
-    private var totalTime: Int = 0 // Original time set by user
-    private var totalRounds: Int? // For EMOM
-    private var interval: Int? // For EMOM
-    private var timeCap: Int? // For For Time
+    private var startTime: Int = 0
 
-    // MARK: - Timer Setup
-    func setTimer(type: TimerDetails) {
-        self.timerType = type
+    // MARK: - Timer Control Methods
 
-        switch type {
+    func configureTimer(timer: TimerModel) {
+
+        if let activeTimer = activeTimer, activeTimer.id == timer.id {
+            // ✅ Prevents overwriting an existing For Time duration
+            if case .forTime(let existingDuration) = activeTimer.type, existingDuration > 0 {
+                print("🚫 Skipping Reconfiguration: For Time already set to \(existingDuration) seconds")
+                return
+            }
+
+            print("🚫 Skipping Reconfiguration: Timer Already Set to \(activeTimer.type)")
+            return
+        }
+        print("🕵️‍♂️ Debug - Timer Setup Creating Timer: \(timer.type)")
+        Thread.callStackSymbols.forEach { print($0) }
+        
+        self.activeTimer = timer
+        print("🛠 After Configuration - Active Timer: \(String(describing: self.activeTimer?.type))")
+
+        switch timer.type {
             case .amrap(let duration):
-                self.remainingTime = duration
-                self.totalTime = duration
-                self.statusMessage = "Ready for AMRAP"
+                if remainingTime == 0 || remainingTime == startTime {
+                    remainingTime = duration > 0 ? duration : remainingTime
+                }
+                startTime = remainingTime
 
-            case .emom(let rounds, let interval):
-                self.totalRounds = rounds
-                self.interval = interval
-                self.remainingTime = interval // Start with one round interval
-                self.statusMessage = "Ready for EMOM"
+            case .forTime(let duration):
+                if let activeTimer = activeTimer, case .forTime(let existingDuration) = activeTimer.type {
+                       if existingDuration > 0 {
+                           print("🚫 Preventing Reset - Keeping Existing Duration: \(existingDuration)")
+                           return // ✅ Prevents overwriting a valid duration
+                       }
+                   }
 
-            case .forTime(let cap):
-                self.timeCap = cap
-                self.elapsedTime = 0
-                self.remainingTime = cap
-                self.statusMessage = "Ready for For Time"
+                   print("✅ Setting For Time - Duration: \(duration)")
+                   remainingTime = 0 // Start from 0
+                   startTime = duration
+            case .emom(let interval, let rounds):
+                if remainingTime == 0 || remainingTime == startTime {
+                    remainingTime = interval > 0 ? interval : remainingTime
+                }
+                startTime = remainingTime
+                currentRound = rounds > 0 ? 1 : currentRound
         }
     }
 
-    // MARK: - Timer Controls
+    func startTimer() {
+        guard let activeTimer = activeTimer else {
+            print("🚫 No active timer found. Cannot start.")
+            return
+        }
 
-    func start() {
-        guard !isRunning else { return }
+        if isRunning {
+            print("🚫 Timer Already Running.")
+            return
+        }
+
         isRunning = true
         isPaused = false
-        statusMessage = "Timer Running"
-        createTimer()
+
+        print("▶️ Timer Started: \(activeTimer.type)")
+
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.tick()
+        }
     }
 
-    func pause() {
-        guard isRunning else { return }
-        timer?.invalidate()
+    private func tick() {
+        guard let activeTimer = activeTimer, isRunning else { return }
+
+        switch activeTimer.type {
+            case .amrap:
+                if remainingTime > 0 {
+                    remainingTime -= 1
+                } else {
+                    stopTimer()
+                }
+            case .forTime(let duration):
+                if remainingTime < duration {
+                    remainingTime += 1
+                } else {
+                    stopTimer()
+                }
+            case .emom(let rounds, let interval):
+                if remainingTime > 0 {
+                    remainingTime -= 1
+                } else if currentRound < rounds {
+                    currentRound += 1
+                    remainingTime = interval
+                } else {
+                    stopTimer()
+                }
+        }
+    }
+
+    func pauseTimer() {
         isRunning = false
         isPaused = true
-        statusMessage = "Timer Paused"
+        timer?.invalidate()
     }
 
-    func stop() {
-        timer?.invalidate()
+    func stopTimer() {
         isRunning = false
         isPaused = false
-        remainingTime = 0
-        elapsedTime = 0
-        currentRound = 1
-        statusMessage = "Workout Stopped"
+        timer?.invalidate()
     }
 
-    func restart() {
-        stop()
-        if let timerType = timerType {
-            setTimer(type: timerType)
-        }
-    }
-
-    // MARK: - Timer Logic
-
-    private func createTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.updateTimer()
-        }
-    }
-
-    private func updateTimer() {
-        guard let timerType = timerType else { return }
-
-        switch timerType {
-            case .amrap:
-                handleAMRAPLogic()
-            case .emom:
-                handleEMOMLogic()
-            case .forTime:
-                handleForTimeLogic()
-        }
-    }
-
-    // MARK: - AMRAP Logic (Counts Down)
-    private func handleAMRAPLogic() {
-        if remainingTime > 0 {
-            remainingTime -= 1
-        } else {
-            stop()
-            statusMessage = "AMRAP Complete!"
-        }
-    }
-
-    // MARK: - EMOM Logic (Rounds + Intervals)
-    private func handleEMOMLogic() {
-        guard let interval = interval, let totalRounds = totalRounds else { return }
-
-        if remainingTime > 0 {
-            remainingTime -= 1
-        } else {
-            if currentRound < totalRounds {
-                currentRound += 1
-                statusMessage = "Starting Round \(currentRound)"
-                remainingTime = interval // Restart interval countdown
-            } else {
-                stop()
-                statusMessage = "EMOM Complete!"
-            }
-        }
-    }
-
-    // MARK: - For Time Logic (Counts Up)
-    private func handleForTimeLogic() {
-        guard let timeCap = timeCap else { return }
-
-        if elapsedTime < timeCap {
-            elapsedTime += 1
-        } else {
-            stop()
-            statusMessage = "For Time Complete!"
+    func resetTimer() {
+        stopTimer()
+        if let activeTimer = activeTimer {
+            print("🔄 Resetting Timer: \(activeTimer.type)")
+            configureTimer(timer: activeTimer) // Reset to initial values
         }
     }
 }
