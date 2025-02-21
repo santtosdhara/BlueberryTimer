@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TimerSetupView: SwiftUI.View {
     let selectedType: TimerDetails
-    @State private var duration: TimeInterval = 0 // Default to 1 min
+    @State private var duration: TimeInterval = 60
     @State private var rounds: Int = 1
     @State private var interval: Int = 0
     @State private var timeCap: Int = 0
@@ -11,116 +11,174 @@ struct TimerSetupView: SwiftUI.View {
     var onConfirm: (TimerDetails) -> Void
 
     var body: some View {
-        //        NavigationView {
         ZStack {
             Color.background.ignoresSafeArea(.all)
             VStack {
                 switch selectedType {
                     case .amrap:
                         VStack {
-                            Form {
-                                Section(header: Text("Total Duration: ")
-                                    .font(.body)
-                                    .foregroundStyle(.white)) {
+                            Text("Set up your AMRAP")
+                                .font(.title)
+                                .foregroundStyle(.white)
+                                .fontWeight(.semibold)
 
-                                        HStack {
-                                            Spacer()
-                                            Picker("Minutes", selection: $duration) {
-                                                ForEach(minuteRange, id: \.self) { minute in
-                                                    Text("\(minute) minutes").tag(minute)
-                                                        .foregroundStyle(.white)
-                                                        .font(.system(size: 20, weight: .medium))
-                                                }
-                                            }
-                                            .pickerStyle(.wheel)
-                                            .frame(width: 200 ,height: 40)
-                                            Spacer()
+                            ZStack {
+                                Rectangle()
+                                    .fill(Color.buttonBg)
+                                    .frame(width: 350, height: 35)
+                                    .cornerRadius(10)
+                                    .padding()
+                                    .opacity(0.3)
+
+                                HStack {
+                                    Spacer()
+                                    Picker("Minutes", selection: $duration) {
+                                        ForEach(minuteRange, id: \.self) { minute in
+                                            Text("\(minute) minutes").tag(minute)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 30, weight: .medium))
                                         }
                                     }
-                                    .listRowBackground(Rectangle()
-                                        .background(Color.clear)
-                                        .foregroundColor(Color.buttonBg)
-                                        .opacity(0.3))
+                                    .pickerStyle(.wheel)
+                                    .frame(width: 365 ,height: 150)
+                                    Spacer()
+                                }
                             }
-                            .frame(maxWidth:400, maxHeight: 300)
+                            .frame(maxWidth:400, maxHeight: 200)
                             .scrollContentBackground(.hidden)
-
                         }
+                        .frame(maxWidth:400, maxHeight: 500)
+                        .scrollContentBackground(.hidden)
 
                     case .emom:
-                        ZStack {
-                            Color.background.ignoresSafeArea(.all) // Set background
-                            Form {
-                                Section(header: Text("Rounds:")
-                                    .font(.body)
-                                    .foregroundStyle(.white)
-                                ){
-                                    HStack {
-                                        Stepper("\(interval)", value: $interval, in: 0...20, step: 1)
-                                            .font(.title3)
-                                            .foregroundStyle(Color.white)
-                                            .tint(Color.buttonBg)
-                                    }
-                                    .padding(.horizontal)
-                                }
-                                .listRowBackground(Rectangle()
-                                    .background(Color.clear)
-                                    .foregroundColor(Color.buttonBg)
+                        VStack {
+                            Text("Set up your EMOM")
+                                .font(.title)
+                                .foregroundStyle(.white)
+                                .fontWeight(.semibold)
+                                .padding(.bottom, 30)
+                            Text("Rounds:")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.white)
+                                .frame(width: 300, height: 30, alignment: .leading)//
+                                .multilineTextAlignment(.leading)
+
+                            ZStack {
+                                Rectangle()
+                                    .fill(Color.buttonBg)
+                                    .frame(width: 350, height: 40)
                                     .opacity(0.3)
-                                )
+                                    .cornerRadius(10)
 
-                                Section(header: Text("Interval:")
-                                    .font(.body)
-                                    .foregroundStyle(.white)
-                                ) {
-                                    HStack {
-                                        Text("Time Interval:")
-                                            .font(.title3)
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(.white)
+                                HStack {
+                                    Stepper("\(interval)", value: $rounds, in: 0...20, step: 1)
+                                        .font(.title3)
+                                        .foregroundStyle(Color.white)
+                                        .tint(Color.buttonBg)
+                                        .padding()
 
-                                        Spacer()
+                                }
+                                .frame(width: 280, height: 60)
+                                .padding(.horizontal)
 
+                            }
+
+                            VStack {
+                                Text("Timer Interval:")
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Color.white)
+                                    .frame(width: 300, height: 30, alignment: .leading)
+                                    .background(Color.background)
+                                    .opacity(100)
+                                    .multilineTextAlignment(.leading)
+                                    .padding(.bottom, 10)
+
+                                ZStack {
+
+                                    Rectangle()
+                                        .fill(Color.buttonBg)
+                                        .frame(width: 350, height: 40)
+                                        .opacity(0.3)
+                                        .cornerRadius(10)
+                                    
+                                    HStack(alignment: .center) {
                                         Picker("Minutes", selection: $duration) {
                                             ForEach(minuteRange, id: \.self) { minute in
-                                                Text("\(minute) min")
+                                                Text("\(minute) minutes")
                                                     .tag(minute)
                                                     .font(.system(size: 20, weight: .medium))
                                                     .foregroundStyle(.white)
                                             }
                                         }
                                         .pickerStyle(.wheel)
-                                        .frame(width: 100 ,height: 40)
-                                    }
-                                    .padding(.horizontal)
-                                }
-                                .listRowBackground(Rectangle()
-                                    .background(Color.clear)
-                                    .foregroundColor(Color.buttonBg)
-                                    .opacity(0.3)
-                                )
-                            }
-                            .frame(maxWidth:400, maxHeight: 300)
-                            .scrollContentBackground(.hidden)
-                        }
+                                        .frame(width: 120 ,height: 150, alignment: .leading)
 
+
+                                        Text(":")
+                                            .font(.title)
+                                            .foregroundStyle(.white)
+                                            .fontWeight(.bold)
+//                                            .padding()
+
+                                        Picker("Minutes", selection: $duration) {
+                                            ForEach(minuteRange, id: \.self) { minute in
+                                                Text("\(minute) seconds")
+                                                    .tag(minute)
+                                                    .font(.system(size: 20, weight: .medium))
+                                                    .foregroundStyle(.white)
+                                            }
+                                        }
+                                        .pickerStyle(.wheel)
+                                        .frame(width: 130 ,height: 150)
+                                    }
+//                                    .padding(.horizontal)
+                                    .frame(width: 300 ,height: 40, alignment: .trailing)
+                                }
+                            }
+
+                        }
+                        .frame(maxWidth:400, maxHeight: 500)
+                        .scrollContentBackground(.hidden)
 
                     case .forTime:
                         VStack {
-                            Text("Time Cap (Min)")
-                                .font(.headline)
+                            Text("Set up your Time Cap")
+                                .font(.title)
                                 .foregroundStyle(.white)
+                                .fontWeight(.semibold)
 
-                            Picker("Minutes", selection: $timeCap) {
-                                ForEach(1...60, id: \.self) { Text("\($0) min") }
+                            ZStack {
+                                Rectangle()
+                                    .fill(Color.buttonBg)
+                                    .frame(width: 350, height: 35)
+                                    .cornerRadius(10)
+                                    .padding()
+                                    .opacity(0.3)
+
+                                HStack {
+                                    Spacer()
+                                    Picker("Minutes", selection: $timeCap) {
+                                        ForEach(minuteRange, id: \.self) { minute in
+                                            Text("\(minute) minutes").tag(minute)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 30, weight: .medium))
+                                        }
+                                    }
+                                    .pickerStyle(.wheel)
+                                    .frame(width: 365 ,height: 150)
+                                    Spacer()
+                                }
                             }
-                            .pickerStyle(WheelPickerStyle())
-
+                            .frame(maxWidth:400, maxHeight: 200)
+                            .scrollContentBackground(.hidden)
                         }
+                        .frame(maxWidth:400, maxHeight: 500)
+                        .scrollContentBackground(.hidden)
                 }
 
-
-                Button("Start Timer") {
+                Button(action: {
                     let newTimer: TimerDetails
                     switch selectedType {
                         case .amrap:
@@ -131,59 +189,22 @@ struct TimerSetupView: SwiftUI.View {
                             newTimer = .forTime(cap: timeCap * 60)
                     }
                     onConfirm(newTimer)
+                }) {
+                    Text("Start Timer")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.buttonBg)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: 250, maxHeight: 20)
-                .padding() // Ensure proper spacing around text
-                .background(.buttonPlayInnerBg) // Ensure this color is visible
-                .foregroundColor(.buttonBg) // Ensure contrast
-                .font(.title2)
-                .fontWeight(.semibold)
-                .cornerRadius(10) // Make sure it has rounded corners
-                .shadow(radius: 3)
+                .frame(width: 250, height: 50)
+                .background(.buttonPlayInnerBg)
+                .cornerRadius(10)
+                .shadow(radius: 10)
             }
         }
-        //            .toolbar {
-        //                ToolbarItem(placement: .principal) {
-        //                    Text("\(titleToolBar.ti)")
-        //                        .font(.headline)
-        //                        .foregroundColor(.white) // Correct way to change color
-        //                }
     }
 }
-
-// **Custom SwiftUI Wrapper for UIDatePicker**
-struct CustomTimerPickerView: UIViewRepresentable {
-    @Binding var timeInterval: TimeInterval
-
-    func makeUIView(context: Context) -> UIDatePicker {
-        let picker = UIDatePicker()
-        picker.datePickerMode = .countDownTimer
-        picker.addTarget(context.coordinator, action: #selector(Coordinator.updateTime), for: .valueChanged)
-        return picker
-    }
-
-    func updateUIView(_ uiView: UIDatePicker, context: Context) {
-        uiView.countDownDuration = timeInterval
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-
-    class Coordinator: NSObject {
-        var parent: CustomTimerPickerView
-
-        init(_ parent: CustomTimerPickerView) {
-            self.parent = parent
-        }
-
-        @objc func updateTime(_ sender: UIDatePicker) {
-            parent.timeInterval = sender.countDownDuration
-        }
-    }
-}
-
 
 #Preview {
-    TimerSetupView(selectedType: .amrap(duration: 0), onConfirm: { _ in })
+    TimerSetupView(selectedType: .emom(rounds: 1, interval: 0) , onConfirm: { _ in })
 }
