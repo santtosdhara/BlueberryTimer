@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-
 struct TimerView: View {
     @ObservedObject var viewModel: TimerViewModel
     @Binding var isSettingUpTimer: Bool
@@ -18,9 +17,6 @@ struct TimerView: View {
                 Color.background.ignoresSafeArea(.all)
 
                 VStack(spacing: 10) {
-                 //   timerSpecificDetails()
-                     //   .padding(20)
-
                     Spacer()
                         .frame(height: 146)
 
@@ -60,7 +56,7 @@ struct TimerView: View {
             .navigationBarTitle("Blueberry Timer", displayMode: .inline)
             .navigationBarItems(leading: backButton)
             .gesture(DragGesture().onEnded { gesture in
-                if gesture.translation.width > 100 { // ✅ Detect left-to-right swipe
+                if gesture.translation.width > 100 {
                     isSettingUpTimer = true
                 }
             })
@@ -76,13 +72,13 @@ struct TimerView: View {
 
     private var backButton: some View {
         Button(action: {
-            isSettingUpTimer = true // ✅ Go back to setup
+            isSettingUpTimer = true
         }) {
             HStack {
                 Image(systemName: "chevron.left")
                     .bold()
             }
-            .foregroundColor(.buttonPlayInnerBg) // ✅ Match app theme
+            .foregroundColor(.buttonPlayInnerBg)
         }
     }
 
@@ -116,10 +112,9 @@ struct TimerView: View {
     }
 
     // Function to format the time
-    private func formatTime(_ seconds: Int) -> String {
-        let minutes = seconds / 60
-        let secondsPart = seconds % 60
-        return String(format: "%02d:%02d", minutes, secondsPart)
+    private func formatTime(_ totalSeconds: Int) -> String {
+        let minutes = totalSeconds / 60
+        return String(format: "%02d:00", minutes)
     }
 }
 

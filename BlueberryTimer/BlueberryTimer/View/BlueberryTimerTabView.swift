@@ -5,11 +5,12 @@ struct BlueberryTimerTabView: View {
     @State private var selectedTabIndex = 0
     @State private var isSettingUpTimer = true
 
-    private let timers: [TimerModel] = [
-        createTimer(title: "AMRAP", type: .amrap(duration: 0)),
-        createTimer(title: "EMOM", type: .emom(rounds: 0, interval: 0)),
-        createTimer(title: "For Time", type: .forTime(duration: 0)) 
-    ]
+
+    @State private var inputMinutes: String = ""
+    @State private var inputRounds: String = ""
+    @State private var inputInterval: String = ""
+
+    @State private var timers: [TimerModel] = []
 
     init() {
         UITabBar.appearance().unselectedItemTintColor = UIColor(Color.buttonPlayInnerBg)
@@ -21,11 +22,13 @@ struct BlueberryTimerTabView: View {
                 Color.background.ignoresSafeArea()
 
                 TabView(selection: $selectedTabIndex) {
-                    ForEach(timers, id: \.id) { timer in
+                    ForEach(timers.indices, id: \.self) { index in
+                        let timer = timers[index]
                         Group {
                             if isSettingUpTimer {
-                                TimerSetupView(viewModel: viewModel, selectedType: timer.type) {
-                                    viewModel.configureTimer(timer: timer)
+                                TimerSetupView(viewModel: viewModel, selectedType: timer.type, inputMinutes: $inputMinutes, inputRounds: $inputRounds, inputInterval: $inputInterval
+                                ) {
+                                    configureTimer(at: index)
                                     isSettingUpTimer = false
                                 }
                             } else {
@@ -35,33 +38,46 @@ struct BlueberryTimerTabView: View {
                         .tabItem {
                             Label(timer.title, systemImage: timerIcon(for: timer.type))
                         }
-                        .tag(timers.firstIndex(where: { $0.id == timer.id }) ?? 0)
+                        .tag(index)
                     }
                 }
-                .onChange(of: selectedTabIndex) { newTab in
-                    print("🔄 Tab Changed: \(newTab), isSettingUpTimer: \(isSettingUpTimer)")
-
-                    if newTab < timers.count {
-                        let selectedTimer = timers[newTab]
-
-                        if viewModel.activeTimer?.id != selectedTimer.id {
-                            // ✅ Prevent For Time from being reset to 0
-                            if case .forTime(let existingDuration) = viewModel.activeTimer?.type, existingDuration > 0 {
-                                print("🚫 Skipping Reset - Keeping Existing For Time Duration: \(existingDuration)")
-                                return
-                            }
-
-                            print("✅ Configuring Timer on Tab Change: \(selectedTimer.type)")
-                            viewModel.configureTimer(timer: selectedTimer)
-                        } else {
-                            print("🚫 Skipping Timer Configuration - Timer Already Set")
-                        }
-                    } else {
-                        print("🚫 Skipping Timer Configuration - Invalid Index")
-                    }
+                .onAppear {
+                    initializeTimer()
                 }
             }
         }
+    }
+
+    private func initializeTimer() {
+        timers = [
+            createTimer(title: "AMRAP", type: .amrap(duration: 0)),
+            createTimer(title: "EMOM", type: .emom(rounds: 0, interval: 0)),
+            createTimer(title: "ForTime", type: .forTime(duration: 0))
+        ]
+    }
+
+    private func configureTimer(at index: Int) {
+        guard index < timers.count else { return }
+
+        let timer = timers[index]
+
+        switch timer.type {
+                    case .amrap:
+                        if let minutes = Int(inputMinutes), minutes > 0 {
+                            timers[index] = createTimer(title: "AMRAP", type: .amrap(duration: minutes * 60))
+                        }
+                    case .emom:
+                if let rounds = Int(inputRounds), let interval = Int(inputInterval), rounds > 0, interval > 0 {
+                            timers[index] = createTimer(title: "EMOM", type: .emom(rounds: rounds, interval: interval))
+                        }
+                    case .forTime:
+                if let minutes = Int(inputMinutes), minutes > 0 {
+                            timers[index] = createTimer(title: "For Time", type: .forTime(duration: minutes * 60))
+                        }
+                }
+
+                viewModel.configureTimer(timer: timers[index])
+
     }
 
     private func timerIcon(for type: TimerType) -> String {
