@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TimerSetupView: View {
     @ObservedObject var viewModel: TimerViewModel
+    
     let selectedType: TimerType
     @Binding var inputMinutes: String
     @Binding var inputRounds: String
@@ -22,7 +23,8 @@ struct TimerSetupView: View {
                                 .foregroundStyle(.white)
                                 .fontWeight(.semibold)
 
-                            inputField(title: "AMRAP Duration", text: $inputMinutes)
+                            inputField(title: "", text: $inputMinutes)
+
 
                         }.padding()
 
@@ -50,12 +52,13 @@ struct TimerSetupView: View {
 
                 Button(action: {
                     onTimerConfigured()
+                    print("Rounds \(inputRounds), \(inputInterval)")
                 }) {
                     Text("Start Timer")
                         .font(.title2)
                         .fontWeight(.semibold)
                         .foregroundColor(.buttonBg)
-                        .frame(width: 250, height: 50)
+                        .frame(width: 350, height: 50)
                         .background(Color.buttonPlayInnerBg)
                         .cornerRadius(10)
                         .shadow(radius: 10)
@@ -72,12 +75,12 @@ struct TimerSetupView: View {
             Text(title)
                 .foregroundStyle(.white)
 
-            TextField("Enter \(title.lowercased())", text: text)
+            TextField("00:00 \(title.lowercased())", text: text)
                 .font(.title)
                 .foregroundStyle(.white)
                 .padding()
+                .background(Color.buttonBg)
                 .frame(width: 350, height: 60)
-                .background(Color.buttonBg.opacity(0.6))
                 .cornerRadius(10)
                 .keyboardType(.numberPad)
                 .onSubmit {

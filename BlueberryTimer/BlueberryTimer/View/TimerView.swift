@@ -10,7 +10,6 @@ import SwiftUI
 struct TimerView: View {
     @ObservedObject var viewModel: TimerViewModel
     @Binding var isSettingUpTimer: Bool
-
     var body: some View {
         NavigationView {
             ZStack {
@@ -28,9 +27,15 @@ struct TimerView: View {
                             .padding()
                     }
 
-                    Text(formatTime(viewModel.remainingTime))
-                        .font(.system(size: 66, weight: .semibold))
+                    Text("Time cap 12:00")
+                        .font(.title3)
                         .foregroundStyle(.white)
+
+                    Text(formatTime(viewModel.remainingTime))
+                        .font(.system(size: 100, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.bottom, 50)
+                        .padding(.top, 40)
 
                     HStack {
                         if viewModel.isRunning {
@@ -46,8 +51,10 @@ struct TimerView: View {
                             Button("Reset", action: viewModel.resetTimer)
                                 .buttonStyle(RestartButtonStyle())
                         } else {
-                            Button(viewModel.remainingTime > 0 ? "Resume" : "Start", action: viewModel.startTimer)
-                                .buttonStyle(StartButtonStyle())
+                            Button(viewModel.isPaused ? "Resume" : "Start") {
+                                viewModel.startTimer()
+                            }
+                            .buttonStyle(StartButtonStyle())
                         }
                     }
                     Spacer()
@@ -61,7 +68,7 @@ struct TimerView: View {
                 }
             })
             .onAppear {
-                if let activeTimer = viewModel.activeTimer, activeTimer.type != .amrap(duration: 0) {
+                if let activeTimer = viewModel.activeTimer {
                     print("✅ TimerView Appeared - Using Existing Timer: \(activeTimer.type) with \(viewModel.remainingTime) seconds")
                 } else {
                     print("🚫 No active timer or invalid timer detected, please configure one first")
@@ -87,22 +94,22 @@ struct TimerView: View {
     private func timerSpecificDetails() -> some View {
         if let activeTimer = viewModel.activeTimer {
             switch activeTimer.type {
-                case .amrap(let duration):
-                    VStack {
-                        Text("Workout Time Cap: \(formatTime(duration))")
-                            .foregroundStyle(.white)
-                    }
-                case .emom(let rounds, let interval):
-                    VStack {
-                        Text("Rounds: \(rounds), Interval: \(interval)s")
-                            .font(.title).foregroundStyle(.white)
-                        Text("Current Round: \(viewModel.currentRound) / \(rounds)")
-                            .foregroundStyle(.white)
-                    }
-                case .forTime(let duration):
-                    Text("Time Cap: \(formatTime(duration))")
-                        .font(.title)
+            case .amrap(let duration):
+                VStack {
+                    Text("Workout Time Cap: \(formatTime(duration))")
                         .foregroundStyle(.white)
+                }
+            case .emom(let rounds, let interval):
+                VStack {
+                    Text("Rounds: \(rounds), Interval: \(formatTime2(interval))")
+                        .font(.title).foregroundStyle(.white)
+                    Text("Current Round: \(viewModel.currentRound) / \(rounds)")
+                        .foregroundStyle(.white)
+                }
+            case .forTime(let duration):
+                Text("Time Cap: \(formatTime(duration))")
+                    .font(.title)
+                    .foregroundStyle(.white)
             }
         } else {
             Text("No Timer Selected")
@@ -111,10 +118,17 @@ struct TimerView: View {
         }
     }
 
-    // Function to format the time
+    // Function to format the time properly
     private func formatTime(_ totalSeconds: Int) -> String {
         let minutes = totalSeconds / 60
-        return String(format: "%02d:00", minutes)
+        let seconds = totalSeconds % 60
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    private func formatTime2(_ intervalSeconds: Int) -> String {
+        let interval = intervalSeconds / 60
+//        let seconds = totalSeconds % 60
+        return String(format: "%02d:%02d", interval)
     }
 }
 
@@ -138,5 +152,5 @@ struct StartButtonStyle: ButtonStyle {
 }
 
 #Preview {
-    TimerView(viewModel: TimerViewModel(), isSettingUpTimer: .constant(true))
+    TimerView(viewModel: TimerViewModel(), isSettingUpTimer: .constant(true) )
 }
