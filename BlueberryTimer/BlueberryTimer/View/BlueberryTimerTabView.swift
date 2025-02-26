@@ -4,21 +4,13 @@ struct BlueberryTimerTabView: View {
     @StateObject private var viewModel = TimerViewModel()
     @State private var selectedTabIndex = 0
     @State private var isSettingUpTimer = true
-    @State private var selectedTimerTitle: String = "Blueberry Timer"
 
 
-    @AppStorage("amrapDuration") private var amrapDuration: Int = 900
-    @AppStorage("emomRounds") private var emomRounds: Int = 10
-    @AppStorage("emomInterval") private var emomInterval: Int = 60
-    @AppStorage("forTimeCap") private var forTimeCap: Int = 300
+    @State private var inputMinutes: String = ""
+    @State private var inputRounds: String = ""
+    @State private var inputInterval: String = ""
 
-    private var timers: [TimerModel] {
-        return [
-            TimerModel(id: UUID(), title: "AMRAP", detail: .amrap(duration: amrapDuration)),
-            TimerModel(id: UUID(), title: "EMOM", detail: .emom(rounds: emomRounds, interval: emomInterval)),
-            TimerModel(id: UUID(), title: "For Time", detail: .forTime(cap: forTimeCap))
-        ]
-    }
+    @State private var timers: [TimerModel] = []
 
     init() {
         UITabBar.appearance().unselectedItemTintColor = UIColor(Color.buttonPlayInnerBg)
@@ -32,11 +24,11 @@ struct BlueberryTimerTabView: View {
                 TabView(selection: $selectedTabIndex) {
                     ForEach(timers.indices, id: \.self) { index in
                         let timer = timers[index]
-
                         Group {
                             if isSettingUpTimer {
-                                TimerSetupView(selectedType: timer.detail) { selectedTimerType in
-                                    viewModel.setTimer(type: selectedTimerType)
+                                TimerSetupView(viewModel: viewModel, selectedType: timer.type, inputMinutes: $inputMinutes, inputRounds: $inputRounds, inputInterval: $inputInterval
+                                ) {
+                                    configureTimer(at: index)
                                     isSettingUpTimer = false
                                 }
                             } else {
@@ -44,36 +36,55 @@ struct BlueberryTimerTabView: View {
                             }
                         }
                         .tabItem {
-                            Label(timer.title, systemImage: timerIcon(for: timer.detail))
+                            Label(timer.title, systemImage: timerIcon(for: timer.type))
                         }
                         .tag(index)
                     }
                 }
-                .onChange(of: selectedTabIndex) { newTab in
-                    let selectedTimer = timers[newTab]
-                    selectedTimerTitle = selectedTimer.title
-                    viewModel.setTimer(type: selectedTimer.detail)
-                }
-            }
-            .navigationTitle("") // Remove default title
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text(selectedTimerTitle)
-                        .font(.title)
-                        .foregroundColor(.white)
+                .onAppear {
+                    initializeTimer()
                 }
             }
         }
     }
 
-    private func timerIcon(for detail: TimerDetails) -> String {
-        switch detail {
-            case .amrap:
-                return "stopwatch"
-            case .emom:
-                return "timer"
-            case .forTime:
-                return "hourglass"
+    private func initializeTimer() {
+        timers = [
+            createTimer(title: "AMRAP", type: .amrap(duration: 0)),
+            createTimer(title: "EMOM", type: .emom(rounds: 0, interval: 0)),
+            createTimer(title: "ForTime", type: .forTime(duration: 0))
+        ]
+    }
+
+    private func configureTimer(at index: Int) {
+        guard index < timers.count else { return }
+
+        let timer = timers[index]
+
+        switch timer.type {
+                    case .amrap:
+                        if let minutes = Int(inputMinutes), minutes > 0 {
+                            timers[index] = createTimer(title: "AMRAP", type: .amrap(duration: minutes * 60))
+                        }
+                    case .emom:
+                if let rounds = Int(inputRounds), let interval = Int(inputInterval), rounds > 0, interval > 0 {
+                            timers[index] = createTimer(title: "EMOM", type: .emom(rounds: rounds, interval: interval))
+                        }
+                    case .forTime:
+                if let minutes = Int(inputMinutes), minutes > 0 {
+                            timers[index] = createTimer(title: "For Time", type: .forTime(duration: minutes * 60))
+                        }
+                }
+
+                viewModel.configureTimer(timer: timers[index])
+
+    }
+
+    private func timerIcon(for type: TimerType) -> String {
+        switch type {
+            case .amrap: return "stopwatch"
+            case .emom:  return "timer"
+            case .forTime: return "hourglass"
         }
     }
 }

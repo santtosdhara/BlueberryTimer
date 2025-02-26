@@ -1,153 +1,131 @@
 import Foundation
 import Combine
 
+
 // MARK: - TimerViewModel
+
 class TimerViewModel: ObservableObject {
-    @Published var remainingTime: Int = 0 // Used for AMRAP & EMOM
-    @Published var elapsedTime: Int = 0 // Used for For Time
+    @Published var activeTimer: TimerModel?
+    @Published var remainingTime: Int = 0
     @Published var isRunning: Bool = false
     @Published var isPaused: Bool = false
     @Published var currentRound: Int = 1
-    @Published var statusMessage: String = "Set a Time"
-    @Published var timerType: TimerDetails?
 
-
-    // Enable Start button only when time is set for AMRAP & For Time
-    var canStart: Bool {
-        if let timerType = timerType {
-            switch timerType {
-                case .amrap: return remainingTime > 0
-                case .forTime: return remainingTime > 0
-                case .emom: return true // EMOM only requires rounds & interval
-            }
-        }
-        return false
-    }
-
-    // MARK: - Private Properties
     private var timer: Timer?
-    private var totalTime: Int = 0 // Original time set by user
-    private var totalRounds: Int? // For EMOM
-    private var interval: Int? // For EMOM
-    private var timeCap: Int? // For For Time
+    private var startTime: Int = 0
 
-    // MARK: - Timer Setup
-    func setTimer(type: TimerDetails) {
-        self.timerType = type
+    // MARK: - Timer Control Methods
 
-        switch type {
-            case .amrap(let duration):
-                self.remainingTime = duration
-                self.totalTime = duration
-                self.statusMessage = "Ready for AMRAP"
-
-            case .emom(let rounds, let interval):
-                self.totalRounds = rounds
-                self.interval = interval
-                self.remainingTime = interval // Start with one round interval
-                self.statusMessage = "Ready for EMOM"
-
-            case .forTime(let cap):
-                self.timeCap = cap
-                self.elapsedTime = 0
-                self.remainingTime = cap
-                self.statusMessage = "Ready for For Time"
+    func configureTimer(timer: TimerModel) {
+        if let activeTimer = activeTimer, activeTimer.id == timer.id {
+            print("🚫 Timer already configured: \(activeTimer.type) ")
+            return
         }
+        print(" Configuring Timer: \(timer.type)")
+        self.activeTimer = timer
+
+        switch timer.type {
+                case .amrap(let duration):
+                    remainingTime = duration
+                    startTime = duration
+
+                case .forTime(let duration):
+                    remainingTime = 0 // Always start from 0
+                    startTime = 0
+
+                case .emom(let rounds, let interval):
+                    remainingTime = interval * 60
+                    startTime = interval
+                    currentRound = 1
+                }
+
+                isRunning = false
+                isPaused = false
     }
 
-    // MARK: - Timer Controls
+    func startTimer() {
+        guard let activeTimer = activeTimer else {
+            print("🚫 No active timer found. Cannot start.")
+            return
+        }
 
-    func start() {
-        guard !isRunning else { return }
+        if isRunning {
+            print("🚫 Timer already running.")
+            return
+        }
+
+        print("▶️ Starting Timer: \(activeTimer.type)")
         isRunning = true
         isPaused = false
-        statusMessage = "Timer Running"
-        createTimer()
+
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.tick()
+        }
     }
 
-    func pause() {
+    private func tick() {
+        guard let activeTimer = activeTimer, isRunning else { return }
+
+        switch activeTimer.type {
+            case .amrap:
+                if remainingTime > 0 {
+                    remainingTime -= 1
+                } else {
+                    stopTimer()
+                }
+            case .forTime(let duration):
+                if remainingTime < duration {
+                    remainingTime += 1
+                } else {
+                    stopTimer()
+                }
+            case .emom(let rounds, let interval):
+                let interval = interval * 60
+
+                if remainingTime > 0 {
+                    remainingTime -= 1
+                } else if currentRound < rounds {
+                    currentRound += 1
+                    remainingTime = interval
+                } else {
+                    stopTimer()
+                }
+        }
+    }
+
+    func pauseTimer() {
         guard isRunning else { return }
-        timer?.invalidate()
+
+        print("⏸ Pausing Timer")
         isRunning = false
         isPaused = true
-        statusMessage = "Timer Paused"
+        timer?.invalidate()
+        timer = nil
     }
 
-    func stop() {
-        timer?.invalidate()
+    func stopTimer() {
+        print("⏹ Stopping Timer")
         isRunning = false
         isPaused = false
-        remainingTime = 0
-        elapsedTime = 0
-        currentRound = 1
-        statusMessage = "Workout Stopped"
+        timer?.invalidate()
+        timer = nil
+        remainingTime = startTime
     }
 
-    func restart() {
-        stop()
-        if let timerType = timerType {
-            setTimer(type: timerType)
-        }
-    }
+    func resetTimer() {
+        print("🔄 Resetting Timer")
+        stopTimer()
 
-    // MARK: - Timer Logic
+        guard let activeTimer = activeTimer else { return }
 
-    private func createTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.updateTimer()
-        }
-    }
-
-    private func updateTimer() {
-        guard let timerType = timerType else { return }
-
-        switch timerType {
-            case .amrap:
-                handleAMRAPLogic()
-            case .emom:
-                handleEMOMLogic()
+        switch activeTimer.type {
+            case .amrap(let duration):
+                remainingTime = duration
             case .forTime:
-                handleForTimeLogic()
-        }
-    }
-
-    // MARK: - AMRAP Logic (Counts Down)
-    private func handleAMRAPLogic() {
-        if remainingTime > 0 {
-            remainingTime -= 1
-        } else {
-            stop()
-            statusMessage = "AMRAP Complete!"
-        }
-    }
-
-    // MARK: - EMOM Logic (Rounds + Intervals)
-    private func handleEMOMLogic() {
-        guard let interval = interval, let totalRounds = totalRounds else { return }
-
-        if remainingTime > 0 {
-            remainingTime -= 1
-        } else {
-            if currentRound < totalRounds {
-                currentRound += 1
-                statusMessage = "Starting Round \(currentRound)"
-                remainingTime = interval // Restart interval countdown
-            } else {
-                stop()
-                statusMessage = "EMOM Complete!"
-            }
-        }
-    }
-
-    // MARK: - For Time Logic (Counts Up)
-    private func handleForTimeLogic() {
-        guard let timeCap = timeCap else { return }
-
-        if elapsedTime < timeCap {
-            elapsedTime += 1
-        } else {
-            stop()
-            statusMessage = "For Time Complete!"
+                remainingTime = 0
+            case .emom(let rounds, let interval):
+                remainingTime = interval * 60
+                currentRound = 1
         }
     }
 }
